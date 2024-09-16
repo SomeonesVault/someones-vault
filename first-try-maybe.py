@@ -23,8 +23,8 @@ def get_destiny_manifest(api_key):
     return response.json()
 
 
-def get_weapon_data(manifest, api_key):
-    weapon_data = []
+def get_item_data(manifest, api_key, item_type):
+    item_data = []
     for key, value in manifest['Response']['jsonWorldComponentContentPaths']['en'].items():
         if 'DestinyInventoryItemDefinition' in key:
             url = f"https://www.bungie.net{value}"
@@ -34,23 +34,25 @@ def get_weapon_data(manifest, api_key):
             response = requests.get(url, headers=headers)
             items = response.json()
             for item in items.values():
-                if item.get('itemType') == 3:  # 3 corresponds to weapons
-                    weapon_data.append((item['hash'], item['displayProperties']['name']))
-    return weapon_data
+                if item.get('itemType') == item_type:
+                    item_data.append((item['hash'], item['displayProperties']['name']))
+    return item_data
 
-def save_weapon_data(weapon_data, filename):
+def save_item_data(item_data, filename):
     with open(filename, 'w') as f:
-        for item_number, name in weapon_data:
+        for item_number, name in item_data:
             f.write(f"{item_number}: {name}\n")
 
 # Fetch the manifest
 manifest = get_destiny_manifest(API_KEY)
 
 # Extract weapon data
-weapon_data = get_weapon_data(manifest, API_KEY)
+weapon_data = get_item_data(manifest, API_KEY, 3)
+save_item_data(weapon_data, 'destiny2_weapons.txt')
 
-# Save weapon data to a text file
-save_weapon_data(weapon_data, 'destiny2_weapons.txt')
+#Extract armor data
+armor_data = get_item_data(manifest, API_KEY, 2)
+save_item_data(armor_data, 'destiny2_armor.txt')
 
 TestVar = get_destiny_manifest(API_KEY)
 
@@ -86,7 +88,7 @@ def get_access_token(auth_code):
 auth_code = input("Enter the URL Code: ")
 access_token = get_access_token(auth_code)
 
-print(access_token)
+
 if access_token:
     def get_user_info(access_token):
         url = 'https://www.bungie.net/Platform/User/GetMembershipsForCurrentUser/'
