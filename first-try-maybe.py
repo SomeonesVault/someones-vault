@@ -9,10 +9,15 @@ CLIENT_ID = '48220'
 REDIRECT_URI = 'https://someonesvault.github.io/'
 AUTH_URL = f'https://www.bungie.net/en/OAuth/Authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}'
 CLIENT_SECRET = 'VCMsXHZ0TmTHj-Vb1IoF4mMMCzqwjfgwUolpubYR5rA'
+BASE_URL = 'https://www.bungie.net/Platform/Destiny2/'
 # Open the authorization URL in the user's browser
 webbrowser.open(AUTH_URL)
 
 TOKEN_URL = 'https://www.bungie.net/platform/app/oauth/token/'
+
+HEADERS = {
+    'X-API-Key': API_KEY
+}
 
 def get_destiny_manifest(api_key):
     # Function to get and save Destiny manifest
@@ -139,3 +144,56 @@ if access_token:
         print("Failed to retrieve character information.")
 else:
     print("Failed to obtain access token.")
+
+#now we in the moneys
+
+    def load_weapons(file_path):
+        weapons = {}
+        with open(file_path, 'r') as file:
+            for line in file:
+                item_instance_id, name = line.strip().split(',')
+                weapons[name.lower()] = item_instance_id
+        return weapons
+
+    def transfer_weapon(item_instance_id, from_character_id, to_character_id=None):
+        url = 'https://www.bungie.net/Platform/Destiny2/Actions/Items/TransferItem/'
+        headers = {
+            'X-API-Key': API_KEY,
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json'
+        }
+        payload = {
+            'itemReferenceHash': item_instance_id,
+            'stackSize': 1,
+            'transferToVault': to_character_id is None,
+            'itemId': item_instance_id,
+            'characterId': from_character_id,
+            'membershipType': membership_type
+        }
+        if to_character_id:
+            payload['transferToVault'] = False
+            payload['characterId'] = to_character_id
+
+        response = requests.post(url, headers=headers, json=payload)
+        return response.json()
+    
+
+    def main():
+        weapons = load_weapons('destiny2_weapons.txt')
+        weapon_name = input("Enter the name of the weapon: ").lower()
+        from_character_id = input("Enter the ID of the character to take the weapon from: ")
+        to_character_id = input("Enter the ID of the character to transfer the weapon to (or 'vault' to transfer to the vault): ")
+
+        item_instance_id = weapons.get(weapon_name)
+        if not item_instance_id:
+            print("Weapon not found.")
+            return
+
+        if to_character_id.lower() == 'vault':
+            to_character_id = None
+
+        result = transfer_weapon(item_instance_id, from_character_id, to_character_id)
+        print(result)
+
+    if __name__ == "__main__":
+        main()

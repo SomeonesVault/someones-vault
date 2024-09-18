@@ -4741,7 +4741,7 @@
 3056827626: Dark Age Bond
 1933599476: Dark Age Visor
 1476803535: Dark Age Legbraces
-1955548646: MataiodoxÃ­a
+1955548646: Mataiodoxía
 50291571: Speaker's Sight
 2273643087: Solipsism
 4055964141: Promised Victory Wraps

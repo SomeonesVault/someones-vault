@@ -569,7 +569,7 @@
 3704653637: Stryker's Sure-Hand
 3588934839: Le Monarque
 2376481550: Anarchy
-417164956: J枚tunn
+417164956: J鰐unn
 3211806999: Izanagi's Burden
 1364093401: The Last Word
 2278995296: Does Not Compute
@@ -1230,17 +1230,17 @@
 874623537: Cataphract GL3 (Adept)
 2314610827: Igneous Hammer (Adept)
 120706239: Word of Crota
-1432682459: Fang of Ir Y没t
+1432682459: Fang of Ir Y鹴
 833898322: Abyss Defiant
 1098171824: Oversoul Edict
 3163900678: Swordbreaker
-2828278545: Song of Ir Y没t
+2828278545: Song of Ir Y鹴
 3926103986: Word of Crota (Adept)
-128782990: Fang of Ir Y没t (Adept)
+128782990: Fang of Ir Y鹴 (Adept)
 3782662983: Abyss Defiant (Adept)
 578105049: Oversoul Edict (Adept)
 1239700299: Swordbreaker (Adept)
-407511664: Song of Ir Y没t (Adept)
+407511664: Song of Ir Y鹴 (Adept)
 1875512595: Kept Confidence
 4132072834: Locus Locutus
 105306149: Eleatic Principle
