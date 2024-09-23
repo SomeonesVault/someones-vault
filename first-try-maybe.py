@@ -146,6 +146,23 @@ if access_token:
 else:
     print("Failed to obtain access token.")
 
+
+def get_character_inventory(membership_id, membership_type, character_id, access_token):
+    url = f'https://www.bungie.net/Platform/Destiny2/{membership_type}/Profile/{membership_id}/Character/{character_id}/?components=201'
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'X-API-Key': API_KEY
+    }
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        inventory_data = response.json()
+        return inventory_data['Response']['inventory']['data']['items']  # Returns a list of items
+    else:
+        print(f"Error: {response.status_code}, {response.json()}")
+        return None
+
+
 def pullfrompost(item_instance_id, char_id, membership_type):
     payload = {
         'itemReferenceHash': item_instance_id,
@@ -156,52 +173,108 @@ def pullfrompost(item_instance_id, char_id, membership_type):
     }
 
 #now we in the moneyy
+def load_weapons(file_path):
+    weapons = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            # Debugging each line read from the file
+            
+            parts = line.strip().split(':')  # Split by ':' to separate ID and name
+            if len(parts) == 2:
+                item_instance_id = parts[0].strip()  # First part is the item ID
+                name = parts[1].strip().rstrip(',').lower()  # Second part is the weapon name, strip trailing comma
+                weapons[name] = item_instance_id  # Store in dictionary  
+            else:
+                print(f"Skipping line due to incorrect format: {line}")  # Debugging skipped lines
+
+    print("Weapons loaded:", weapons)  # Debugging all loaded weapons
+    return weapons
 
 
-##def load_weapons(file_path):
- #       weapons = {}
- #       with open(file_path, 'r') as file:
- #           for line in file:
- #               item_instance_id, name = line.strip().split(',')
- #               weapons[name.lower()] = item_instance_id
- #       return weapons
-#
- #   def transfer_weapon(item_instance_id, from_character_id, to_character_id=None):
- #       url = 'https://www.bungie.net/Platform/Destiny2/Actions/Items/TransferItem/'
- #       headers = {
- #           'X-API-Key': API_KEY,
- #           'Authorization': f'Bearer {access_token}',
- #           'Content-Type': 'application/json'
- #       }
- #       payload = {
- #           'itemReferenceHash': item_instance_id,
- #           'stackSize': 1,
- #           'transferToVault': to_character_id is None,
- #           'itemId': item_instance_id,
- #           'characterId': from_character_id,
- #           'membershipType': membership_type
- #       }
- #       if to_character_id:
- #           payload['transferToVault'] = False
- #           payload['characterId'] = to_character_id
-#
- #       response = requests.post(url, headers=headers, json=payload)
- #       return response.json()
- #   
-#
- #   def main():
- #       weapons = load_weapons('destiny2_weapons.txt')
- #       weapon_name = input("Enter the name of the weapon: ").lower()
- #       from_character_id = input("Enter the ID of the character to take the weapon from: ")
- #       to_character_id = input("Enter the ID of the character to transfer the weapon to (or 'vault' to transfer to the vault): ")
-#
- #       item_instance_id = weapons.get(weapon_name)
- #       if not item_instance_id:
- #           print("Weapon not found.")
- #           return
-#
- #       if to_character_id.lower() == 'vault':
- #           to_character_id = None
-#
- #       result = transfer_weapon(item_instance_id, from_character_id, to_character_id)
- #       print(result)
+def transfer_weapon(item_reference_hash, item_instance_id, from_character_id, to_character_id=None):
+    url = 'https://www.bungie.net/Platform/Destiny2/Actions/Items/TransferItem/'
+    headers = {
+        'X-API-Key': API_KEY,
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+    
+    # The correct payload structure for transferring an item
+    payload = {
+        'itemReferenceHash': int(item_reference_hash),  # Static hash for the item
+        'itemId': str(item_instance_id),  # Unique instance ID for the item in the player's inventory
+        'stackSize': 1,  # Assuming you're transferring one item at a time
+        'transferToVault': to_character_id is None,  # True if transferring to the vault
+        'characterId': from_character_id,  # The character taking the item from
+        'membershipType': membership_type  # The player's membership type
+    }
+
+    # If transferring to another character, set 'transferToVault' to False
+    if to_character_id:
+        payload['transferToVault'] = False
+        payload['characterId'] = to_character_id  # Update the character ID for the destination
+
+    # Debugging print to inspect the payload before sending
+    print(f"Payload being sent: {payload}")
+    
+    # Make the POST request to transfer the weapon
+    response = requests.post(url, headers=headers, json=payload)
+    
+    # Return the response in case of success or error
+    return response.json()
+
+def main():
+    # Load weapons from file (which has item hashes)
+    weapons = load_weapons('destiny2_weapons_comma.txt')
+
+    # Check if weapons were loaded
+    if not weapons:
+        print("No weapons were loaded. Please check the file.")
+        return
+
+    # Ask user for the weapon name
+    weapon_name = input("Enter the name of the weapon: ").lower().strip()
+    print(f"Searching for weapon: '{weapon_name}'")
+
+    # Get the item hash for the weapon from the file
+    item_hash = weapons.get(weapon_name)
+
+    if not item_hash:
+        print(f"Weapon '{weapon_name}' not found.")
+        print("Available weapons:", ', '.join(weapons.keys()))
+        return
+
+    # Ask for character details
+    from_character_id = input("Enter the ID of the character to take the weapon from: ")
+    to_character_id = input("Enter the ID of the character to transfer the weapon to (or type 'vault' to transfer to the vault): ")
+
+    if to_character_id.lower() == 'vault':
+        to_character_id = None
+
+    # Fetch the user's inventory to find the correct item instance ID
+    inventory = get_character_inventory(membership_id, membership_type, from_character_id, access_token)
+
+    if not inventory:
+        print("Failed to retrieve inventory.")
+        return
+
+    # Find the item_instance_id by matching the item hash (static ID) with inventory
+    item_instance_id = None
+    for item in inventory:
+        if item['itemHash'] == int(item_hash):  # Check if the hash matches
+            item_instance_id = item['itemInstanceId']  # This is the unique item instance ID
+            break
+
+    if not item_instance_id:
+        print(f"Item with hash {item_hash} not found in the inventory of character {from_character_id}.")
+        return
+
+    # Now transfer using the correct item_instance_id and the static item_hash
+    result = transfer_weapon(item_hash, item_instance_id, from_character_id, to_character_id)
+
+    # Print the result of the transfer
+    print(result)
+
+if __name__ == "__main__":
+    main()
+
