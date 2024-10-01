@@ -214,10 +214,8 @@ def transfer_weapon(item_reference_hash, item_instance_id, from_character_id, to
         payload['transferToVault'] = False
         payload['characterId'] = to_character_id  # Update the character ID for the destination
 
-    # Debugging print to inspect the payload before sending
-    print(f"Payload being sent: {payload}")
     
-    # Make the POST request to transfer the weapon
+    print(f"Payload being sent: {payload}")
     response = requests.post(url, headers=headers, json=payload)
     
     # Return the response in case of success or error
@@ -236,7 +234,7 @@ def main():
     weapon_name = input("Enter the name of the weapon: ").lower().strip()
     print(f"Searching for weapon: '{weapon_name}'")
 
-    # Get the item hash for the weapon from the file
+    
     item_hash = weapons.get(weapon_name)
 
     if not item_hash:
@@ -272,7 +270,6 @@ def main():
     # Now transfer using the correct item_instance_id and the static item_hash
     result = transfer_weapon(item_hash, item_instance_id, from_character_id, to_character_id)
 
-    # Print the result of the transfer
     print(result)
 
 if __name__ == "__main__":
