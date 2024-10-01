@@ -186,8 +186,6 @@ def load_weapons(file_path):
                 weapons[name] = item_instance_id  # Store in dictionary  
             else:
                 print(f"Skipping line due to incorrect format: {line}")  # Debugging skipped lines
-
-    print("Weapons loaded:", weapons)  # Debugging all loaded weapons
     return weapons
 
 
@@ -245,20 +243,26 @@ def main():
         return
 
     # Ask for character details
-    from_character_id = input("Enter the ID of the character to take the weapon from: ")
+    from_character_id = input("Enter the ID of the character to take the weapon from (or type 'vault' to transfer from vault): ")
     to_character_id = input("Enter the ID of the character to transfer the weapon to (or type 'vault' to transfer to the vault): ")
 
     if to_character_id.lower() == 'vault':
         to_character_id = None
 
-    # Fetch the user's inventory to find the correct item instance ID
+    if from_character_id.lower() == 'vault':
+        from_character_id = None
+
+    if to_character_id == from_character_id:
+        print("Please input again as you cannot transfer an item to and from the vault.")
+        from_character_id = input("Enter the ID of the character to take the weapon from (or type 'vault' to transfer from vault): ")
+        to_character_id = input("Enter the ID of the character to transfer the weapon to (or type 'vault' to transfer to the vault): ")
+    
     inventory = get_character_inventory(membership_id, membership_type, from_character_id, access_token)
 
     if not inventory:
         print("Failed to retrieve inventory.")
         return
-
-    # Find the item_instance_id by matching the item hash (static ID) with inventory
+    
     item_instance_id = None
     for item in inventory:
         if item['itemHash'] == int(item_hash):  # Check if the hash matches
@@ -268,12 +272,11 @@ def main():
     if not item_instance_id:
         print(f"Item with hash {item_hash} not found in the inventory of character {from_character_id}.")
         return
-
-    # Now transfer using the correct item_instance_id and the static item_hash
     result = transfer_weapon(item_hash, item_instance_id, from_character_id, to_character_id)
 
     # Print the result of the transfer
     print(result)
+
 
 if __name__ == "__main__":
     main()
